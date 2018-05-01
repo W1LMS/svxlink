@@ -4,6 +4,13 @@ set(MODNAME EchoLink)
 # Module source code
 set(MODSRC QsoImpl.cpp)
 
+# ***
+pkg_check_modules(DBUS dbus-1)
+include_directories(${DBUS_INCLUDE_DIRS})
+set(LIBS ${LIBS} ${DBUS_LIBRARIES})
+set(MODSRC ${MODSRC} PatchCord.cpp BrandMeisterBridge.cpp)
+# ***
+
 # Project libraries to link to
 set(LIBS ${LIBS} echolib)
 
@@ -35,7 +42,6 @@ string(TOUPPER MODULE_${MODNAME} VERNAME)
 # Build the plugin
 add_library(Module${MODNAME} MODULE Module${MODNAME}.cpp ${MODSRC})
 set_target_properties(Module${MODNAME} PROPERTIES PREFIX "")
-set_property(TARGET Module${MODNAME} PROPERTY NO_SONAME 1)
 target_link_libraries(Module${MODNAME} ${LIBS})
 
 # Deduce the version h-file target name from the module name and make the
