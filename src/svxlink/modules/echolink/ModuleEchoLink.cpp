@@ -211,7 +211,7 @@ bool ModuleEchoLink::initialize(void)
       	 << "/CALLSIGN) to a real callsign\n";
     return false;
   }
-  
+
   string password;
   if (!cfg().getValue(cfgName(), "PASSWORD", password))
   {
@@ -415,6 +415,21 @@ bool ModuleEchoLink::initialize(void)
     moduleCleanup();
     return false;
   }
+
+  if (cfg().getValue(cfgName(), "BRIDGE_DEFAULT", value))
+  {
+    bridge.setDefaultConfiguration(value.c_str());
+  }
+  if (cfg().getValue(cfgName(), "BRIDGE_ENCODING", value))
+  {
+    bridge.setEncodingConfiguration(value.c_str());
+  }
+  if (cfg().getValue(cfgName(), "BRIDGE_PROXY", value))
+  {
+    bridge.setProxyConfiguration(value.c_str());
+  }
+
+  bridge.setCallConfiguration(mycall.c_str());
 
     // Initialize directory server communication
   dir = new Directory(servers, mycall, password, location, bind_addr);
@@ -1271,6 +1286,7 @@ void ModuleEchoLink::onChatMsgReceived(QsoImpl *qso, const string& msg)
   ss << "chat_received [subst -nocommands -novariables {";
   ss << escaped;
   ss << "}]";
+  bridge.handleChatMessage(escaped.c_str());
   processEvent(ss.str());
 } /* onChatMsgReceived */
 
@@ -1597,6 +1613,7 @@ void ModuleEchoLink::broadcastTalkerStatus(void)
 
   if (squelch_is_open && listen_only_valve->isOpen())
   {
+    const char* sysop_name = bridge.getTalker();
     msg << "> " << mycall << "         " << sysop_name << "\n\n";
   }
   else
@@ -1605,6 +1622,7 @@ void ModuleEchoLink::broadcastTalkerStatus(void)
     {
       msg << "> " << talker->remoteCallsign() << "         "
       	  << talker->remoteName() << "\n\n";
+      bridge.setTalker(talker->remoteCallsign().c_str(), talker->remoteName().c_str());
     }
     msg << mycall << "         ";
     if (!listen_only_valve->isOpen())
